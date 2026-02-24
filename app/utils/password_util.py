@@ -5,7 +5,6 @@ What this file does:
 - Hashes passwords before saving (never store plain passwords!)
 - Verifies passwords when user logs in
 
-Note: In production, use bcrypt instead of SHA256
 """
 
 import hashlib

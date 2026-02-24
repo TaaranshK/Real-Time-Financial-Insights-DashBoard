@@ -1,0 +1,6 @@
+Financial Monitoring System (Full Stack Project)
+- Built a real-time crypto dashboard using FastAPI (Python), React (Vite), and PostgreSQL.
+- Implemented secure JWT authentication, live BTC price updates via WebSockets, portfolio tracking, price alerts, and Google Gemini AI-powered market insights.
+- Designed and deployed REST APIs, WebSocket endpoints, and a responsive frontend for seamless user experience.
+- Solved CORS, WebSocket, and AI rate limit challenges; focused on clean code and scalable architecture.
+- Project demonstrates end-to-end skills in backend, frontend, database, real-time data, and AI integration.

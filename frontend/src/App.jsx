@@ -1,62 +1,109 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { isLoggedIn } from './api'
-import Navbar from './components/Navbar'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Portfolio from './pages/Portfolio'
-import AIAnalysis from './pages/AIAnalysis'
-import Alerts from './pages/Alerts'
+import React from "react";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Dashboard from "./pages/Dashboard";
+import Holdings from "./pages/Holdings";
+import Login from "./pages/Login";
+import MarketAnalysis from "./pages/MarketAnalysis";
+import Portfolio from "./pages/Portfolio";
+import Register from "./pages/Register";
+import Settings from "./pages/Settings";
 
-// protects routes - redirects to login if not authenticated
 function ProtectedRoute({ children }) {
-  if (!isLoggedIn()) {
-    return <Navigate to="/login" />
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
   }
-  return children
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
 
-function App() {
+function ProtectedLayout({ children }) {
   return (
-    <div>
-      {/* show navbar on all pages except login */}
-      {isLoggedIn() && <Navbar />}
-      
-      <Routes>
-        {/* public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* protected routes - need to be logged in */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/portfolio" element={
-          <ProtectedRoute>
-            <Portfolio />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/ai" element={
-          <ProtectedRoute>
-            <AIAnalysis />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/alerts" element={
-          <ProtectedRoute>
-            <Alerts />
-          </ProtectedRoute>
-        } />
-        
-        {/* catch all - redirect to dashboard */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-panel">
+        <Navbar />
+        <main className="page-content">{children}</main>
+      </div>
     </div>
-  )
+  );
 }
 
-export default App
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <Dashboard />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/portfolio"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <Portfolio />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/holdings"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <Holdings />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analysis"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <MarketAnalysis />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <Settings />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
+  );
+}

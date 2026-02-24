@@ -1,6 +1,5 @@
 """
-jwt_util.py - Handles JWT Token Creation and Validation
-========================================================
+
 
 What this file does:
 - Creates JWT tokens (for login)
@@ -14,7 +13,7 @@ from jose import jwt, JWTError
 
 
 
-# Secret key used to sign tokens (keep this private!)
+# Secret key used to sign tokens 
 SECRET_KEY = "lead-nurturing-style-secret"
 
 # Algorithm used for encryption
@@ -26,14 +25,9 @@ TOKEN_EXPIRY_MINUTES = 60
 
 
 def create_jwt_token(data: dict):
-    """
-    Creates a JWT token with user data.
     
-    Input: {"user_id": 1, "email": "user@example.com", "role": "user"}
-    Output: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-    """
     
-    # Step 1: Copy the data (don't modify original)
+    # Step 1: Copy the data 
     payload = data.copy()
 
     # Step 2: Calculate expiry time (now + 60 minutes)
@@ -63,6 +57,6 @@ def decode_jwt_token(token: str):
         decoded_data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return decoded_data
     
-    except JWTError:
+    except JWTError: 
         # Token is invalid or expired
         return None

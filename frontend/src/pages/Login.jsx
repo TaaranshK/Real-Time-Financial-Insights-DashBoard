@@ -1,69 +1,63 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { login } from '../api'
-import './Login.css'
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      await login(email, password)
-      // success - go to dashboard
-      navigate('/')
-      // force page reload to update navbar
-      window.location.reload()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    const remembered = localStorage.getItem("rememberEmail");
+    if (remembered) {
+      setEmail(remembered);
+      setRememberMe(true);
     }
-  }
+  }, []);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+    if (!result.success) {
+      setError(result.error || "Login failed");
+      return;
+    }
+    if (rememberMe) {
+      localStorage.setItem("rememberEmail", email);
+    } else {
+      localStorage.removeItem("rememberEmail");
+    }
+    navigate("/");
+  };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h1>📈 Financial Monitor</h1>
-        <p className="subtitle">Track your investments in real-time</p>
-
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          {error && <p className="error">{error}</p>}
-
-          <button type="submit" className="btn" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <p className="note">
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
-      </div>
+    <div className="auth-shell">
+      <form className="auth-card" onSubmit={onSubmit}>
+        <h1>Sign In</h1>
+        <p>Financial Monitoring System</p>
+        {error ? <div className="error">{error}</div> : null}
+        <label>Email</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <label>Password</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <label className="checkbox">
+          <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+          Remember me
+        </label>
+        <button className="button" type="submit" disabled={loading}>
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+        <div className="auth-links">
+          No account? <Link to="/register">Register</Link>
+        </div>
+      </form>
     </div>
-  )
+  );
 }
-
-export default Login

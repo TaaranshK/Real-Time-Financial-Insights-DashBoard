@@ -1,99 +1,330 @@
+Endpoints:
+"""
+POST /portfolios - Create portfolio
+2. GET /portfolios - Get all user portfolios
+3. GET /portfolios/{id} - Get specific portfolio
+4. PUT /portfolios/{id} - Update portfolio
+5. DELETE /portfolios/{id} - Delete portfolio
+6. GET /portfolios/{id}/holdings - Get portfolio holdings
+7. POST /portfolios/{id}/holdings - Add holding
+8. PUT /holdings/{id}/price - Update holding price
+9. DELETE /holdings/{id} - Remove holding
+10. GET /portfolios/{id}/summary - Get portfolio summary
+11. GET /portfolios/{id}/allocation - Get asset allocation
 """
 
-What this file does:
-- Add asset to portfolio: POST /portfolio/add
-- Get my portfolio: GET /portfolio/me
 
-
-"""
-
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from ..database import SessionLocal
-from ..models.portfolio_model import Portfolio
-from ..schemas.portfolio_schema import PortfolioCreate, PortfolioResponse
-from ..auth.auth_validate import auth_validate
+from flask import Blueprint, request, jsonify
+from app.services.portfolio_service import PortfolioService
 
 
 
-router = APIRouter(
-    prefix="/portfolio",
-    tags=["Portfolio"]
-)
+
+portfolio_bp = Blueprint('portfolio', __name__, url_prefix='/api/portfolio')
 
 
-
-def get_db():
-    """
-    Creates a database session for each request.
-    """
-    db = SessionLocal()
+#Create a new Portfolio
+@portfolio_bp.route('/portfolios', methods=['POST'])
+@token_required
+def create_portfolio():
+  
     try:
-        yield db
-    finally:
-        db.close()
-
-
-
-@router.post("/add", response_model=PortfolioResponse)
-def add_to_portfolio(
-    data: PortfolioCreate,
-    current_user=Depends(auth_validate),
-    db: Session = Depends(get_db)
-):
-
+        data = request.get_json()
+        user_id = request.user_data.get('user_id')
+        
+        # Validate required fields
+        if not data or not data.get('name'):
+            return jsonify({'message': 'Portfolio name is required'}), 400
+        
+        # Create portfolio
+        portfolio, message = PortfolioService.create_portfolio(
+            user_id=user_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            portfolio_type=data.get('portfolio_type', 'Equity')
+        )
+        
+        if not portfolio:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({
+            'message': message,
+            'portfolio': portfolio.to_dict()
+        }), 201
     
-    # Step 1: Get user id from JWT token
-    user_id = current_user["user_id"]
-
-    # Step 2: Check if user already has this asset
-    existing_asset = (
-        db.query(Portfolio)
-        .filter(Portfolio.user_id == user_id)
-        .filter(Portfolio.asset_name == data.asset_name)
-        .first()
-    )
-
-    # Step 3: If asset exists, add to existing quantity
-    if existing_asset is not None:
-        existing_asset.quantity = existing_asset.quantity + data.quantity
-        db.commit()
-        db.refresh(existing_asset)
-        return existing_asset
-
-    # Step 4: If new asset, create new entry
-    new_asset = Portfolio(
-        user_id=user_id,
-        asset_name=data.asset_name,
-        quantity=data.quantity
-    )
-
-    db.add(new_asset)
-    db.commit()
-    db.refresh(new_asset)
-
-    return new_asset
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
 
-#  GET MY PORTFOLIO 
-@router.get("/me", response_model=list[PortfolioResponse])
-def get_my_portfolio(
-    current_user=Depends(auth_validate),
-    db: Session = Depends(get_db)
-):
+"""Get all portfolios for logged-in user"""
+
+@portfolio_bp.route('/portfolios', methods=['GET'])
+@token_required
+def get_user_portfolios():
+   
+    try:
+        user_id = request.user_data.get('user_id')
+        
+        portfolios = PortfolioService.get_user_portfolios(user_id)
+        
+        return jsonify({
+            'message': 'Portfolios retrieved successfully',
+            'portfolios': [p.to_dict() for p in portfolios],
+            'total': len(portfolios)
+        }), 200
     
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+ """Get specific portfolio"""
+@portfolio_bp.route('/portfolios/<int:portfolio_id>', methods=['GET'])
+@token_required
+def get_portfolio(portfolio_id):
     
-    # Step 1: Get user id from JWT token
-    user_id = current_user["user_id"]
+    try:
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check if user owns this portfolio
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        return jsonify({
+            'message': 'Portfolio retrieved successfully',
+            'portfolio': portfolio.to_dict()
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
-    # Step 2: Get all portfolio items for this user
-    portfolio_items = (
-        db.query(Portfolio)
-        .filter(Portfolio.user_id == user_id)
-        .all()
-    )
+ """Update portfolio"""
+@portfolio_bp.route('/portfolios/<int:portfolio_id>', methods=['PUT'])
+@token_required
+def update_portfolio(portfolio_id):
+    
+    try:
+        data = request.get_json()
+        
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        # Update portfolio
+        updated_portfolio, message = PortfolioService.update_portfolio(
+            portfolio_id,
+            **data
+        )
+        
+        if not updated_portfolio:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({
+            'message': message,
+            'portfolio': updated_portfolio.to_dict()
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
-    # Step 3: Return the list
-    return portfolio_items
+   """Delete portfolio"""
+@portfolio_bp.route('/portfolios/<int:portfolio_id>', methods=['DELETE'])
+@token_required
+def delete_portfolio(portfolio_id):
+    
+    try:
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        # Delete portfolio
+        success, message = PortfolioService.delete_portfolio(portfolio_id)
+        
+        if not success:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({'message': message}), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+
+
+ """Get all holdings in a portfolio"""
+
+
+@portfolio_bp.route('/portfolios/<int:portfolio_id>/holdings', methods=['GET'])
+@token_required
+def get_holdings(portfolio_id):
+    """Get all holdings in a portfolio"""
+    try:
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        holdings = PortfolioService.get_portfolio_holdings(portfolio_id)
+        
+        return jsonify({
+            'message': 'Holdings retrieved successfully',
+            'holdings': [h.to_dict() for h in holdings],
+            'total': len(holdings)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+#Add a Stock To Portfolio
+@portfolio_bp.route('/portfolios/<int:portfolio_id>/holdings', methods=['POST'])
+@token_required
+def add_holding(portfolio_id):
+   
+    try:
+        data = request.get_json()
+        
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        # Validate required fields
+        required = ['stock_symbol', 'stock_name', 'quantity', 'buy_price']
+        if not all(data.get(field) for field in required):
+            return jsonify({'message': 'Missing required fields'}), 400
+        
+        # Add holding
+        holding, message = PortfolioService.add_holding(
+            portfolio_id=portfolio_id,
+            stock_symbol=data.get('stock_symbol'),
+            stock_name=data.get('stock_name'),
+            quantity=float(data.get('quantity')),
+            buy_price=float(data.get('buy_price')),
+            sector=data.get('sector')
+        )
+        
+        if not holding:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({
+            'message': message,
+            'holding': holding.to_dict()
+        }), 201
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+# Update holding price (simulate price change)
+@portfolio_bp.route('/holdings/<int:holding_id>/price', methods=['PUT'])
+@token_required
+def update_holding_price(holding_id):
+  
+    try:
+        data = request.get_json()
+        
+        if not data or 'new_price' not in data:
+            return jsonify({'message': 'New price is required'}), 400
+        
+        new_price = float(data.get('new_price'))
+        
+        # Update price
+        holding, message = PortfolioService.update_holding_price(holding_id, new_price)
+        
+        if not holding:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({
+            'message': message,
+            'holding': holding.to_dict()
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+ """Remove a holding from portfolio"""
+@portfolio_bp.route('/holdings/<int:holding_id>', methods=['DELETE'])
+@token_required
+def remove_holding(holding_id):
+   
+    try:
+        success, message = PortfolioService.remove_holding(holding_id)
+        
+        if not success:
+            return jsonify({'message': message}), 400
+        
+        return jsonify({'message': message}), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+
+"""Get complete portfolio summary"""
+
+@portfolio_bp.route('/portfolios/<int:portfolio_id>/summary', methods=['GET'])
+@token_required
+def get_portfolio_summary(portfolio_id):
+    
+    try:
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        summary = PortfolioService.get_portfolio_summary(portfolio_id)
+        
+        return jsonify({
+            'message': 'Summary retrieved successfully',
+            'data': summary
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+ Get asset allocation (for pie chart)
+@portfolio_bp.route('/portfolios/<int:portfolio_id>/allocation', methods=['GET'])
+@token_required
+def get_allocation(portfolio_id):
+   
+    
+   
+    try:
+        portfolio = PortfolioService.get_portfolio_by_id(portfolio_id)
+        
+        if not portfolio:
+            return jsonify({'message': 'Portfolio not found'}), 404
+        
+        # Check authorization
+        if portfolio.user_id != request.user_data.get('user_id'):
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        allocation = PortfolioService.get_portfolio_allocation(portfolio_id)
+        
+        return jsonify({
+            'message': 'Allocation retrieved successfully',
+            'allocation': allocation
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500

@@ -1,36 +1,40 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { clearToken } from '../api'
-import './Navbar.css'
+import React from "react";
+import { FiLogOut, FiUser } from "react-icons/fi";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function Navbar() {
-  const navigate = useNavigate()
-  const location = useLocation()
+const TITLES = {
+  "/": "Dashboard",
+  "/portfolio": "Portfolio",
+  "/holdings": "Holdings",
+  "/analysis": "Market Analysis",
+  "/settings": "Settings",
+};
 
-  // logout clears token and goes to login
-  function handleLogout() {
-    clearToken()
-    navigate('/login')
-  }
-
-  // check if current path matches link
-  function isActive(path) {
-    return location.pathname === path ? 'active' : ''
-  }
+export default function Navbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <nav className="navbar">
-      <div className="nav-brand">📈 FinMonitor</div>
-      
-      <div className="nav-links">
-        <Link to="/" className={isActive('/')}>Dashboard</Link>
-        <Link to="/portfolio" className={isActive('/portfolio')}>Portfolio</Link>
-        <Link to="/ai" className={isActive('/ai')}>AI Analysis</Link>
-        <Link to="/alerts" className={isActive('/alerts')}>Alerts</Link>
+    <header className="navbar">
+      <h2>{TITLES[location.pathname] || "Financial Monitoring"}</h2>
+      <div className="navbar-right">
+        <span className="user-pill">
+          <FiUser />
+          {user?.username || user?.email || "User"}
+        </span>
+        <button
+          className="button danger"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+        >
+          <FiLogOut />
+          Logout
+        </button>
       </div>
-      
-      <button onClick={handleLogout} className="logout-btn">Logout</button>
-    </nav>
-  )
+    </header>
+  );
 }
-
-export default Navbar

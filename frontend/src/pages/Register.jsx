@@ -1,76 +1,60 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { register } from '../api'
-import './Login.css'
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const navigate = useNavigate()
+export default function Register() {
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      await register(email, password)
-      setSuccess(true)
-      // after 2 seconds go to login
-      setTimeout(() => navigate('/login'), 2000)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    const result = await register(form);
+    setLoading(false);
+    if (!result.success) {
+      setError(result.error || "Registration failed");
+      return;
     }
-  }
+    navigate("/login");
+  };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h1>📈 Financial Monitor</h1>
-        <p className="subtitle">Create your account</p>
-
-        {success ? (
-          <div className="success">
-            Account created! Redirecting to login...
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              placeholder="Create a password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={4}
-            />
-
-            {error && <p className="error">{error}</p>}
-
-            <button type="submit" className="btn" disabled={loading}>
-              {loading ? 'Creating account...' : 'Register'}
-            </button>
-          </form>
-        )}
-
-        <p className="note">
-          Already have an account? <Link to="/login">Login here</Link>
-        </p>
-      </div>
+    <div className="auth-shell">
+      <form className="auth-card" onSubmit={onSubmit}>
+        <h1>Create Account</h1>
+        <p>Start tracking your portfolio</p>
+        {error ? <div className="error">{error}</div> : null}
+        <label>Username</label>
+        <input
+          value={form.username}
+          onChange={(e) => setForm((s) => ({ ...s, username: e.target.value }))}
+          required
+        />
+        <label>Email</label>
+        <input
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+          required
+        />
+        <label>Password</label>
+        <input
+          type="password"
+          value={form.password}
+          onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))}
+          required
+        />
+        <button className="button" type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Register"}
+        </button>
+        <div className="auth-links">
+          Already registered? <Link to="/login">Sign in</Link>
+        </div>
+      </form>
     </div>
-  )
+  );
 }
-
-export default Register
