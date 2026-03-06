@@ -49,6 +49,11 @@ export const holdingAPI = {
 export const analysisAPI = {
   analyzeStock: (data) => api.post("/market-analysis/analyze", data),
   getAnalyses: (limit = 10) => api.get(`/market-analysis/analyses?limit=${limit}`),
+  getNews: () => api.get("/market-analysis/news"),
+};
+
+export const dashboardAPI = {
+  getSummary: () => api.get("/portfolio/summary"),
 };
 
 export const saveToken = (token) => {

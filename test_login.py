@@ -1,17 +1,35 @@
-import urllib.request
-import json
+"""
+Quick login flow test - register then login.
 
-try:
-    data = json.dumps({'email': 'taaransh.kapoor@gmail.com', 'password': 'password123'}).encode('utf-8')
-    req = urllib.request.Request(
-        'http://127.0.0.1:8000/auth/login', 
-        data=data, 
-        headers={'Content-Type': 'application/json'}
-    )
-    response = urllib.request.urlopen(req, timeout=10)
-    print("SUCCESS!")
-    print(response.read().decode())
-except urllib.error.HTTPError as e:
-    print(f"HTTP ERROR {e.code}: {e.read().decode()}")
-except Exception as e:
-    print(f"ERROR: {e}")
+Run with: pytest test_login.py -v
+Uses SQLite in-memory database for testing.
+"""
+
+import pytest
+
+
+def test_register_and_login(client):
+    """Test complete user registration and login flow."""
+    # Register a new user
+    reg = client.post("/api/auth/register", json={
+        "username": "demo",
+        "email": "demo@example.com",
+        "password": "password123",
+    })
+    assert reg.status_code == 201
+
+    # Login with credentials
+    login = client.post("/api/auth/login", json={
+        "email": "demo@example.com",
+        "password": "password123",
+    })
+    assert login.status_code == 200
+    token = login.json()["data"]["access_token"]
+    assert token is not None
+
+    # Verify profile is accessible with token
+    profile = client.get("/api/auth/profile", headers={
+        "Authorization": f"Bearer {token}",
+    })
+    assert profile.status_code == 200
+    assert profile.json()["user"]["email"] == "demo@example.com"

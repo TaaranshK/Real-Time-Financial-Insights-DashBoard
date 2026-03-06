@@ -1,32 +1,32 @@
 """
-
-What this file does:
-1. Creates a connection to PostgreSQL database
-2. Provides a way for other files to talk to database
-
-
+Database configuration and session management.
+Uses SQLite for development, PostgreSQL for production.
 """
 
-
+import os
 from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+# Store AND Configure URL  
+# PostgreSQL connection
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:Guddiguddi13@localhost:5432/financial_db"
+)
 
-
-DATABASE_URL = "postgresql://postgres:Guddiguddi13%40@localhost:5432/financial_db"
-
-
-
-# This creates the actual connection to database basically acts as a bridge between Python and Postgrsql
-
+#Create Database Engine
 engine = create_engine(DATABASE_URL)
 
+# Create Database Session 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-
-# SessionLocal is like a factory that creates database sessions
-# Each session is like opening Excel - you make changes, then save and close
-SessionLocal = sessionmaker(
-    autocommit=False,   # We will manually commit changes
-    autoflush=False,    # Don't automatically send changes
-    bind=engine         # Connect to our database engine
-)
+# Handle The Database Injection
+def get_db():
+    
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

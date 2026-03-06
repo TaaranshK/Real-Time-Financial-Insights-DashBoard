@@ -12,8 +12,7 @@ Simple trend analysis:
 - If same = sideways
 """
 
-
-# ============ ANALYZE TREND ============
+ 
 def analyze_trend(prices):
     """
     Analyzes if price is trending up, down, or sideways.

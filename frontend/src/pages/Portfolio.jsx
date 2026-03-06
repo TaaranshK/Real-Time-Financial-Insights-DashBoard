@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { FiPlus } from "react-icons/fi";
 import { portfolioAPI } from "../services/api";
 
 export default function Portfolio() {
@@ -16,9 +17,7 @@ export default function Portfolio() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const createPortfolio = async (e) => {
     e.preventDefault();
@@ -35,26 +34,23 @@ export default function Portfolio() {
   return (
     <section>
       <h1>Portfolio</h1>
-      {error ? <div className="error">{error}</div> : null}
-      <form className="card form-grid" onSubmit={createPortfolio}>
-        <h3>Create Portfolio</h3>
+      {error && <div className="error">{error}</div>}
+      <form className="card form-grid" onSubmit={createPortfolio} style={{maxWidth: 450}}>
+        <h3><FiPlus style={{marginRight: 6}} />Create Portfolio</h3>
         <input placeholder="Portfolio name" value={name} onChange={(e) => setName(e.target.value)} required />
-        <input
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button className="button" type="submit">
-          Add Portfolio
-        </button>
+        <input placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <button className="button" type="submit">Create</button>
       </form>
       <div className="card">
         <h3>Your Portfolios</h3>
-        {items.length === 0 ? <p>No portfolios yet.</p> : null}
+        {items.length === 0 && <p style={{color: "#64748b"}}>No portfolios yet. Create one above.</p>}
         {items.map((item) => (
           <div className="row-line" key={item.id}>
-            <strong>{item.name}</strong>
-            <span>{item.portfolio_type}</span>
+            <div>
+              <strong>{item.name}</strong>
+              {item.description && <div style={{fontSize: "0.8rem", color: "#64748b"}}>{item.description}</div>}
+            </div>
+            <span className="badge hold">{item.portfolio_type}</span>
           </div>
         ))}
       </div>

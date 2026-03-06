@@ -1,88 +1,106 @@
 # Financial Monitoring System
 
-This project is a full-stack Financial Monitoring System designed to help users track, analyze, and manage their investment portfolios. It features a Python FastAPI backend and a modern React frontend.
+Full-stack financial monitoring app with AI-powered market analysis.
+
+**Tech Stack:** FastAPI (Python) + React + Anthropic Claude API
 
 ---
 
-## Features
+## What it does
 
-- **User Authentication:** Secure login, registration, and JWT-based session management
-- **Portfolio Management:** Track holdings, view portfolio performance, and manage assets
-- **Market Analysis:** AI-powered market analysis and forecasting tools
-- **Risk Assessment:** Utilities for risk analysis and portfolio optimization
-- **Email & OTP:** Email notifications and OTP-based password reset
-- **Modern UI:** Responsive React frontend with dashboard, holdings, market analysis, and settings pages
+- **Portfolio Management** - Create portfolios, add stock holdings, track prices
+- **AI Market Analysis** - Analyze any stock and get sentiment + buy/sell recommendations
+- **Market News** - See latest financial news headlines
+- **Dashboard** - Overview of your portfolio value, P&L, and recent AI insights
 
 ---
 
 ## Project Structure
 
-### Backend (`app/`)
+```
+app/
+  main.py              <- All API routes + Pydantic validation models
+  services/
+    ai_service.py      <- GenAI pipeline (news -> LLM -> sentiment -> recommendation)
+  utils/
+    risk_utils.py      <- Risk calculation helpers
+    forecast_utils.py  <- Trend analysis helpers
 
-- `main.py`: FastAPI entry point
-- `database.py`: Database connection and models
-- `controllers/`: API route handlers (user, portfolio, market analysis)
-- `models/`: ORM models for users, holdings, stocks, etc.
-- `services/`: Business logic (AI analysis, user, portfolio, password reset)
-- `utils/`: Utility modules (email, JWT, OTP, password, risk, forecasting)
+frontend/src/
+  pages/               <- Dashboard, Portfolio, Holdings, MarketAnalysis, etc.
+  components/          <- Navbar, Sidebar
+  context/             <- Auth state management
+  services/api.js      <- Axios API client
 
-### Frontend (`frontend/src/`)
-
-- `components/`: Navbar, Sidebar, and reusable UI components
-- `pages/`: Dashboard, Holdings, Market Analysis, Portfolio, Login, Register, Settings
-- `context/`: Global authentication context
-- `services/`: API service for backend communication
+test_apis.py           <- pytest backend tests
+test_login.py          <- Auth flow tests
+```
 
 ---
 
 ## Getting Started
 
-### Backend Setup
+### Backend
 
-1. **Install dependencies:**
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # On Windows
-   pip install -r requirements.txt
-   ```
-2. **Run the backend server:**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+```bash
+python -m venv venv
+venv\Scripts\activate       # Windows
+pip install -r requirements.txt
 
-### Frontend Setup
+# optional: set your API key for real AI analysis
+set ANTHROPIC_API_KEY=your_key_here
 
-1. **Navigate to frontend folder:**
-   ```bash
-   cd frontend
-   ```
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Run the frontend app:**
-   ```bash
-   npm run dev
-   ```
+uvicorn app.main:app --reload
+```
 
----
+API docs at http://localhost:8000/docs
 
-## Usage
+### Frontend
 
-1. Register or log in as a user.
-2. Add and manage your investment holdings.
-3. Analyze your portfolio and view AI-powered market insights.
-4. Use risk and forecasting tools to optimize your investments.
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Opens at http://localhost:5173
+
+### Run Tests
+
+```bash
+pytest test_apis.py test_login.py -v
+```
 
 ---
 
-## Additional Documentation
+## AI Analysis Pipeline
 
-- See `FRONTEND_SETUP_GUIDE.txt` and `FRONTEND_IMPLEMENTATION_COMPLETE_GUIDE.txt` in the `frontend/` folder for more details on the frontend.
-- See `Project_Summary.txt` for a high-level overview.
+The market analysis feature follows this pipeline:
+
+1. **Fetch News** - Gets relevant financial news
+2. **Build Prompt** - Combines stock info + news into a prompt
+3. **Call LLM** - Sends to Claude API with retry logic
+4. **Parse Response** - Extracts structured JSON
+5. **Return Result** - Summary, sentiment, and buy/sell recommendation
+
+If no API key is set, it falls back to a mock analysis so the app still works.
 
 ---
 
-## License
+## API Endpoints
 
-This project is for educational purposes. Please check individual files for license details.
+| Method | Endpoint                                | Description       |
+| ------ | --------------------------------------- | ----------------- |
+| POST   | /api/auth/register                      | Register new user |
+| POST   | /api/auth/login                         | Login             |
+| GET    | /api/auth/profile                       | Get profile       |
+| PUT    | /api/auth/profile                       | Update profile    |
+| POST   | /api/portfolio/portfolios               | Create portfolio  |
+| GET    | /api/portfolio/portfolios               | List portfolios   |
+| POST   | /api/portfolio/portfolios/{id}/holdings | Add holding       |
+| GET    | /api/portfolio/portfolios/{id}/holdings | Get holdings      |
+| PUT    | /api/portfolio/holdings/{id}/price      | Update price      |
+| GET    | /api/portfolio/summary                  | Dashboard stats   |
+| POST   | /api/market-analysis/analyze            | Run AI analysis   |
+| GET    | /api/market-analysis/analyses           | Past analyses     |
+| GET    | /api/market-analysis/news               | Market news       |

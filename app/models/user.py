@@ -1,67 +1,40 @@
-from app import db 
-from datetime import datetime
-import enum
+"""User database model."""
 
-class UserRole(enum.ENUM):
-    "User Roles in the System"
-    ADMIN = "ADMIN"
-    MANAGER = "MANAGER"
-    INVESTOR = " INVESTOR"
-    USER = "USER"
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from app.database import Base
 
-class User(db.Model):
 
-    __tablename__ = 'users'
+class User(Base):
+    __tablename__ = "users"
 
-    #Primary key
-
-    id = db.Column(db.Integer , primary_key = True)
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password = Column(String(255), nullable=False)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    phone = Column(String(20), nullable=True)
+    role = Column(String(20), default="USER")
     
-    #Basic Information
-    username = db.Column( db.String(80) , unique=True, nullable=False , index=True)
-    email = db.Column(  db.String(120),unique=True,nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    first_name = db.Column(db.String(80))
-    last_name = db.Column(db.String(80))
-    phone = db.Column(db.String(20))
-
-
-    #Account Status
-    is_active = db.Column(db.Boolean , default=True)
-    is_verified = db.Column(db.Boolean , default=False)
-    role = db.Column(db.Enum(UserRole), default=UserRole.INVESTOR,nullable=False)
-
-    #OTP 
-    otp = db.Column(db.String(6))
-    otp_expiry = db.Column(db.DateTime)
-
-    #password Reset
-    reset_token = db.Column(db.String(255))
-    reset_token_expiry = db.Column(db.DateTime)
-
-    #Timestamp
-    created_at  = db.Column(db.DateTime, default=datetime.utcnow,nullable=False)
-    updated_at = db.Column(db.DateTime,default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
-
-    #To String 
-    def __repr__(self):
-        """String representation of user"""
-        return f'<User {self.email}>'
+    # Password reset tracking
+    password_reset_requested_at = Column(DateTime, nullable=True)
+    password_reset_token_used = Column(Boolean, default=False)
     
-    #To Dict or To JSON
-    def to_dict(self):
-        """Convert user to dictionary"""
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'phone': self.phone,
-            'is_active': self.is_active,
-            'is_verified': self.is_verified,
-            'role': self.role.value,
-            'created_at': self.created_at.isoformat(),
-            'last_login': self.last_login.isoformat() if self.last_login else None
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self, include_password=False):
+        data = {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "phone": self.phone,
+            "role": self.role,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+        if include_password:
+            data["password"] = self.password
+        return data

@@ -132,17 +132,25 @@ export default function Holdings() {
       </form>
       <div className="card">
         <h3>Current Holdings</h3>
-        {holdings.length === 0 ? <p>No holdings yet.</p> : null}
-        {holdings.map((h) => (
-          <div key={h.id} className="row-line">
-            <strong>
-              {h.stock_symbol} ({h.stock_name})
-            </strong>
-            <span>Qty: {h.quantity}</span>
-            <span>Price: {h.current_price}</span>
-            <span>ID: {h.id}</span>
-          </div>
-        ))}
+        {holdings.length === 0 ? <p style={{color: "#64748b"}}>No holdings in this portfolio yet.</p> : null}
+        {holdings.map((h) => {
+          const pnl = ((h.current_price - h.buy_price) * h.quantity).toFixed(2);
+          const isUp = pnl >= 0;
+          return (
+            <div key={h.id} className="row-line">
+              <div>
+                <strong>{h.stock_symbol}</strong>
+                <span style={{color: "#64748b", marginLeft: 6, fontSize: "0.85rem"}}>{h.stock_name}</span>
+              </div>
+              <span>Qty: {h.quantity}</span>
+              <span>${h.current_price}</span>
+              <span style={{color: isUp ? "#22c55e" : "#ef4444"}}>
+                {isUp ? "+" : ""}{pnl}
+              </span>
+              <span style={{color: "#4a5568", fontSize: "0.75rem"}}>#{h.id}</span>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
