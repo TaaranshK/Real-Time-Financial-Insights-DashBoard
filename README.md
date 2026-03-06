@@ -1,106 +1,104 @@
-# Financial Monitoring System
+# 💰 Financial Monitoring System
 
-Full-stack financial monitoring app with AI-powered market analysis.
+Real-time portfolio dashboard with AI-powered stock analysis. Built with FastAPI + React + Claude AI.
 
-**Tech Stack:** FastAPI (Python) + React + Anthropic Claude API
+## ✨ Features
 
----
+| Feature | Description |
+|---------|-------------|
+| 📊 **Portfolios** | Create and manage multiple investment portfolios |
+| 📈 **Holdings** | Track stocks with real-time prices and P&L |
+| 🤖 **AI Analysis** | Claude-powered sentiment & recommendations |
+| 🔐 **Security** | Secure password reset (3-step: OTP → JWT → Reset) |
+| 🌙 **Dark UI** | Modern React frontend with dark theme |
+| ✅ **Tests** | 22+ passing tests with pytest |
 
-## What it does
+## 🚀 Quick Start
 
-- **Portfolio Management** - Create portfolios, add stock holdings, track prices
-- **AI Market Analysis** - Analyze any stock and get sentiment + buy/sell recommendations
-- **Market News** - See latest financial news headlines
-- **Dashboard** - Overview of your portfolio value, P&L, and recent AI insights
-
----
-
-## Project Structure
-
-```
-app/
-  main.py              <- All API routes + Pydantic validation models
-  services/
-    ai_service.py      <- GenAI pipeline (news -> LLM -> sentiment -> recommendation)
-  utils/
-    risk_utils.py      <- Risk calculation helpers
-    forecast_utils.py  <- Trend analysis helpers
-
-frontend/src/
-  pages/               <- Dashboard, Portfolio, Holdings, MarketAnalysis, etc.
-  components/          <- Navbar, Sidebar
-  context/             <- Auth state management
-  services/api.js      <- Axios API client
-
-test_apis.py           <- pytest backend tests
-test_login.py          <- Auth flow tests
-```
-
----
-
-## Getting Started
+### Requirements
+- Python 3.8+ and Node.js 16+
+- PostgreSQL optional (SQLite works for dev)
 
 ### Backend
-
 ```bash
-python -m venv venv
-venv\Scripts\activate       # Windows
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# optional: set your API key for real AI analysis
-set ANTHROPIC_API_KEY=your_key_here
-
-uvicorn app.main:app --reload
+python setup_schema.py               # Create database schema
+python -m uvicorn app.main:app --reload
 ```
-
-API docs at http://localhost:8000/docs
+**API:** http://localhost:8000/docs
 
 ### Frontend
-
 ```bash
-cd frontend
-npm install
-npm run dev
+cd frontend && npm install && npm run dev
+```
+**App:** http://localhost:5173
+
+### Tests
+```bash
+pytest -v                            # Run all tests
+python test_auth_api.py              # Test authentication
 ```
 
-Opens at http://localhost:5173
+## 📡 API Endpoints
 
-### Run Tests
+**Auth**
+- `POST /api/auth/register` - Register user
+- `POST /api/auth/login` - Login & get token
+- `POST /api/auth/forgot-password` - Request OTP
+- `POST /api/auth/verify-otp` - Verify OTP, get reset token
+- `POST /api/auth/reset-password` - Reset with JWT
 
-```bash
-pytest test_apis.py test_login.py -v
+**Portfolio**
+- `POST /api/portfolio/portfolios` - Create portfolio
+- `GET /api/portfolio/portfolios` - List portfolios
+- `POST /api/portfolio/portfolios/{id}/holdings` - Add stock
+- `GET /api/portfolio/summary` - Dashboard stats
+- `PUT /api/portfolio/holdings/{id}/price` - Update price
+
+**Analysis**
+- `POST /api/market-analysis/analyze` - Analyze stock
+- `GET /api/market-analysis/analyses` - History
+- `GET /api/market-analysis/news` - Market news
+
+## 🏗️ Architecture
+
+```
+Backend (FastAPI)              Frontend (React)
+├── controllers/               ├── pages/
+│   ├── auth_routes.py         │   ├── Dashboard
+│   ├── portfolio_routes.py     │   ├── Portfolio
+│   └── market_analysis_routes.py │  ├── Holdings
+├── services/                  │   └── MarketAnalysis
+│   ├── auth_service.py        ├── services/
+│   ├── portfolio_service.py    │   └── api.js
+│   └── market_analysis_service.py ├── context/
+└── utils/                     │   └── AuthContext.jsx
+    ├── jwt_util.py            └── styles.css
+    ├── otp_util.py
+    └── email_util.py
 ```
 
----
+## 🔧 Environment Variables
 
-## AI Analysis Pipeline
+Create `.env` file:
+```bash
+DATABASE_URL=postgresql://user:pass@localhost/financial_db
+SECRET_KEY=your-secret-key
+ANTHROPIC_API_KEY=sk-...
+SMTP_SERVER=smtp.gmail.com
+SENDER_EMAIL=your-email@gmail.com
+```
 
-The market analysis feature follows this pipeline:
+## 🎯 Key Highlights
 
-1. **Fetch News** - Gets relevant financial news
-2. **Build Prompt** - Combines stock info + news into a prompt
-3. **Call LLM** - Sends to Claude API with retry logic
-4. **Parse Response** - Extracts structured JSON
-5. **Return Result** - Summary, sentiment, and buy/sell recommendation
+- **Clean Architecture** - Dependency injection, separated concerns
+- **Password Reset** - Secure 3-step flow with OTP + JWT
+- **AI Pipeline** - News → LLM → Sentiment → Recommendation
+- **Testing** - Full pytest coverage with SQLite fixtures
+- **Type Safe** - Pydantic validation on all endpoints
+- **Database** - SQLAlchemy ORM with PostgreSQL + SQLite support
 
-If no API key is set, it falls back to a mock analysis so the app still works.
+## 📝 License
 
----
-
-## API Endpoints
-
-| Method | Endpoint                                | Description       |
-| ------ | --------------------------------------- | ----------------- |
-| POST   | /api/auth/register                      | Register new user |
-| POST   | /api/auth/login                         | Login             |
-| GET    | /api/auth/profile                       | Get profile       |
-| PUT    | /api/auth/profile                       | Update profile    |
-| POST   | /api/portfolio/portfolios               | Create portfolio  |
-| GET    | /api/portfolio/portfolios               | List portfolios   |
-| POST   | /api/portfolio/portfolios/{id}/holdings | Add holding       |
-| GET    | /api/portfolio/portfolios/{id}/holdings | Get holdings      |
-| PUT    | /api/portfolio/holdings/{id}/price      | Update price      |
-| GET    | /api/portfolio/summary                  | Dashboard stats   |
-| POST   | /api/market-analysis/analyze            | Run AI analysis   |
-| GET    | /api/market-analysis/analyses           | Past analyses     |
-| GET    | /api/market-analysis/news               | Market news       |
+MIT - Use freely for personal or commercial projects
