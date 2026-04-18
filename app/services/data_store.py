@@ -1,7 +1,4 @@
-"""
-In-memory data stores.
-These would be database tables in a production app.
-"""
+
 
 from typing import Any
 

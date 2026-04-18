@@ -1,0 +1,181 @@
+Build a premium, production-grade Financial Monitoring System dashboard frontend using React, Tailwind CSS, and Framer Motion for animations. The design should be a dark-themed fintech UI with glassmorphism cards, smooth gradient accents (indigo → cyan → emerald), subtle glow effects, and micro-interactions that feel alive. Think Bloomberg Terminal meets modern SaaS — professional yet visually stunning.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- React 18 + React Router v6
+- Tailwind CSS (dark theme by default, slate-900/950 backgrounds)
+- Framer Motion (page transitions, staggered card reveals, number counters, hover lifts)
+- Recharts for charts (area charts, pie charts, bar charts — all with gradient fills)
+- Lucide React icons
+- React Hot Toast for notifications
+- Axios for API calls
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND API (already built — FastAPI at http://localhost:8000)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All endpoints return JSON. Auth endpoints require "Authorization: Bearer <token>" header.
+
+AUTH ENDPOINTS (prefix: /api/auth):
+  POST /register          — body: { username, email, password, first_name?, last_name?, phone? }
+  POST /login             — body: { email, password } → returns { access_token, refresh_token, user }
+  GET  /profile           — returns logged-in user profile
+  PUT  /profile           — body: { username?, first_name?, last_name?, phone? }
+  POST /forgot-password   — body: { email }
+  POST /verify-otp        — body: { email, otp } → returns { reset_token }
+  POST /reset-password    — body: { token, new_password }
+  POST /change-password   — body: { current_password, new_password }
+
+PORTFOLIO ENDPOINTS (prefix: /api/portfolio, all authenticated):
+  POST /portfolios                          — body: { name, description?, portfolio_type? }
+  GET  /portfolios                          — list all user portfolios
+  GET  /portfolios/{id}                     — single portfolio with holdings
+  POST /portfolios/{id}/holdings            — body: { stock_symbol, stock_name, quantity, buy_price, sector? }
+  GET  /portfolios/{id}/holdings            — list holdings in portfolio
+  PUT  /holdings/{id}/price                 — body: { new_price }
+  GET  /summary                             — returns { total_portfolios, total_holdings, total_invested, total_current_value, profit_loss, pct_change }
+
+MARKET ANALYSIS ENDPOINTS (prefix: /api/market-analysis, all authenticated):
+  POST /analyze       — body: { stock_symbol, stock_name?, current_price?, sector? } → AI-powered analysis with sentiment + recommendation
+  GET  /analyses      — past analyses (query: limit=10)
+  GET  /news          — array of market news headlines
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PAGES & FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. LOGIN PAGE (/login)
+   - Centered card with glassmorphism on a dark gradient background with floating animated particles or grid pattern
+   - Email + password inputs with floating labels
+   - "Sign In" button with loading spinner and gradient hover effect
+   - "Forgot Password?" link → navigates to /forgot-password
+   - "Don't have an account? Register" link → /register
+   - Framer Motion: card slides up on mount, inputs stagger in
+
+2. REGISTER PAGE (/register)
+   - Similar aesthetic to login
+   - Fields: first_name, last_name, username, email, phone, password, confirm_password
+   - Client-side validation (email format, password min 6 chars, passwords match)
+   - Success → redirect to /login with toast "Account created successfully"
+   - Framer Motion: card and fields animate in with stagger
+
+3. FORGOT PASSWORD PAGE (/forgot-password)
+   - Step 1: Email input → calls POST /forgot-password → shows "OTP sent to your email"
+   - Step 2: 6-digit OTP input (individual digit boxes like a PIN entry) → calls POST /verify-otp
+   - Step 3: New password + confirm password → calls POST /reset-password
+   - Progress stepper at top (3 steps) with animated transitions between steps
+   - Success → redirect to /login with toast
+
+4. DASHBOARD (/ — protected route, default after login)
+   - Welcome banner: "Good morning, {first_name}" with current date, subtle gradient background
+   - Summary stats row (4 cards with animated number counters):
+     • Total Portfolios (icon: Briefcase)
+     • Total Holdings (icon: TrendingUp)
+     • Total Invested (icon: DollarSign) — formatted as currency
+     • Profit/Loss (icon: BarChart3) — green if positive, red if negative, with percentage badge
+   - Portfolio Performance area chart (Recharts) — gradient fill under the line, showing portfolio value over time
+   - Asset Allocation pie/donut chart by sector
+   - Recent Market Analysis cards (last 3) — show stock symbol, sentiment badge (Bullish=green, Bearish=red, Neutral=yellow), recommendation action
+   - Market News ticker/cards from GET /news
+   - All cards: glassmorphism (bg-white/5 backdrop-blur-xl border border-white/10), hover:scale-[1.02] transition
+   - Framer Motion: staggered card entrance, number count-up animation
+
+5. PORTFOLIO PAGE (/portfolio)
+   - "My Portfolios" header with "+ Create Portfolio" button (opens modal)
+   - Create Portfolio modal: name, description, type (Equity/Mutual Fund/Crypto/Mixed) dropdown
+   - Portfolio cards in a grid — each card shows: name, type badge, holdings count, total value, P&L with color
+   - Click a portfolio card → expands or navigates to portfolio detail view
+   - Portfolio Detail view:
+     • Portfolio header with name, description, type, created date
+     • "+ Add Holding" button (opens modal)
+     • Add Holding modal: stock_symbol, stock_name, quantity, buy_price, sector dropdown
+     • Holdings table with columns: Symbol, Name, Qty, Buy Price, Current Price, Invested, Current Value, P&L, P&L%, Actions
+     • "Update Price" action on each holding (inline edit or small modal)
+     • P&L cells are green (profit) or red (loss) with up/down arrow icons
+     • Mini sparkline or bar chart per holding for visual impact
+   - Framer Motion: cards animate in with stagger, modals animate with scale+fade
+
+6. HOLDINGS PAGE (/holdings)
+   - Aggregated view of ALL holdings across all portfolios
+   - Sortable, searchable data table
+   - Summary bar at top: total invested, current value, overall P&L
+   - Sector distribution donut chart
+   - Top gainers and top losers cards
+
+7. MARKET ANALYSIS PAGE (/market-analysis)
+   - Split layout: left side = analysis form, right side = results
+   - Analysis form: stock_symbol input (with autocomplete feel), stock_name, current_price, sector dropdown
+   - "Analyze with AI" button with pulsing/glowing animation
+   - Result card (appears with Framer Motion slide-in):
+     • Stock symbol + name header
+     • AI Summary text
+     • Sentiment badge (Bullish/Bearish/Neutral) with appropriate color and icon
+     • Recommendation card: Action (BUY=green, SELL=red, HOLD=yellow), Confidence level bar, Reason text
+     • News headlines used in analysis
+   - Analysis History section below: list of past analyses as collapsible cards
+   - Framer Motion: result card slides up, sentiment badge pops in
+
+8. SETTINGS PAGE (/settings)
+   - Profile section: editable fields (username, first_name, last_name, phone) with save button
+   - Change Password section: current_password, new_password, confirm_new_password
+   - Account info display: email (read-only), role badge, member since date
+   - Framer Motion: sections stagger in
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYOUT & NAVIGATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Sidebar navigation (collapsible) with icons + labels: Dashboard, Portfolio, Holdings, Market Analysis, Settings
+- Active route highlighted with gradient accent bar on the left
+- Top navbar: app logo/name "FinVue" on left (or in sidebar), user avatar + name dropdown on right (Profile, Logout)
+- Sidebar collapses to icons-only on smaller screens, becomes bottom tab bar on mobile
+- Page transitions: Framer Motion AnimatePresence with fade+slide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUTH CONTEXT & ROUTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- AuthContext provider: stores user object + access_token in state and localStorage
+- ProtectedRoute wrapper: redirects to /login if no token
+- On app load: check localStorage for token, if exists call GET /profile to validate, if 401 clear token and redirect to login
+- Axios interceptor: attach Bearer token to all /api requests, on 401 response clear auth and redirect to login
+- Login: store tokens + user, redirect to /
+- Logout: clear localStorage, clear state, redirect to /login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESIGN SYSTEM GUIDELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Background: slate-950 base with subtle dot grid or radial gradient overlay
+- Cards: bg-gradient-to-br from-white/5 to-white/[0.02], backdrop-blur-xl, border border-white/10, rounded-2xl, shadow-2xl
+- Primary gradient: from-indigo-500 via-purple-500 to-cyan-500 (for buttons, accents, active states)
+- Success/Profit: emerald-400/500
+- Danger/Loss: rose-400/500
+- Warning/Neutral: amber-400/500
+- Text: white for headings, slate-300 for body, slate-500 for muted
+- Inputs: bg-white/5 border-white/10, focus:border-indigo-500 focus:ring-indigo-500/20
+- Buttons: gradient background with hover brightness boost, active scale-95, disabled opacity-50
+- Font: Inter or system font stack
+- Consistent 8px spacing scale
+- All interactive elements have smooth transitions (duration-200 ease-out)
+- Cards have subtle hover:shadow-indigo-500/10 glow effect
+- Numbers and currency use tabular-nums font-feature for alignment
+- Loading states: skeleton shimmer animations (bg-white/5 animate-pulse)
+- Empty states: illustrated with icon + message + CTA button
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+API SERVICE LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Create an api.js service using Axios:
+  - Base URL: http://localhost:8000
+  - Request interceptor: attach Authorization header from localStorage
+  - Response interceptor: handle 401 → clear auth → redirect /login
+  - Export named functions for every API endpoint (e.g., loginUser, registerUser, getPortfolios, analyzeStock, etc.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Make it responsive (mobile-first approach)
+- Every page should feel alive with tasteful micro-animations (not overdone)
+- Use consistent error handling: red toast for errors, green toast for success
+- Form validation with inline error messages
+- No light mode needed — dark theme only
+- Use Vite as bundler
+- The overall feel should be: premium, professional, trustworthy — like a fintech product you'd pay for

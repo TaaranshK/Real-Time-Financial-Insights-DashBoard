@@ -49,6 +49,25 @@ def get_current_user(authorization: str | None = Header(default=None), db: Sessi
     return user
 
 
+def get_default_user(db: Session = Depends(get_db)):
+    """Return the default user, creating one if it doesn't exist."""
+    from app.models.user import User
+    user = db.query(User).filter(User.username == "default").first()
+    if not user:
+        user = User(
+            username="default",
+            email="default@findash.local",
+            password="unused",
+            first_name="Default",
+            last_name="User",
+            role="USER",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user
+
+
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     """Register a new user."""
@@ -107,12 +126,7 @@ def update_profile(payload: ProfileUpdateRequest, user=Depends(get_current_user)
 
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    """
-    Request password reset.
-    Generates and sends OTP to user's email.
-    
-    Returns: {"message": str, "success": bool}
-    """
+   
     success, message = request_password_reset(payload.email, db)
     
     if not success:
@@ -123,12 +137,7 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
 
 @router.post("/verify-otp")
 def verify_otp(payload: VerifyOTPRequest, db: Session = Depends(get_db)):
-    """
-    Verify password reset OTP.
-    Returns JWT reset token if OTP is valid.
     
-    Returns: {"message": str, "success": bool, "reset_token": str | None}
-    """
     success, message, reset_token = verify_password_reset_otp(payload.email, payload.otp_code, db)
     
     if not success:

@@ -1,9 +1,5 @@
-"""
-Pydantic models for request/response validation.
-These define what data the API accepts and returns.
-"""
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field
 
 
 # Auth schemas
@@ -33,12 +29,22 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class VerifyOTPRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     email: EmailStr
-    otp: str = Field(..., min_length=6, max_length=6)
+    otp_code: str = Field(
+        ...,
+        min_length=6,
+        max_length=6,
+        validation_alias=AliasChoices("otp_code", "otp"),
+    )
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str
+    model_config = ConfigDict(populate_by_name=True)
+    reset_token: str = Field(
+        ...,
+        validation_alias=AliasChoices("reset_token", "token"),
+    )
     new_password: str = Field(..., min_length=6)
 
 

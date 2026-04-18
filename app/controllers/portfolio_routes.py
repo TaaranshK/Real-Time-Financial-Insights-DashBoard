@@ -5,7 +5,7 @@ Portfolio routes - manage user portfolios and holdings
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.controllers.auth_routes import get_current_user
+from app.controllers.auth_routes import get_default_user
 from app.database import get_db
 from app.models.schemas import HoldingRequest, PortfolioRequest, PriceUpdateRequest
 from app.services.portfolio_service import (
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 
 
 @router.post("/portfolios", status_code=status.HTTP_201_CREATED)
-def create_portfolio_route(payload: PortfolioRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def create_portfolio_route(payload: PortfolioRequest, user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Create a new portfolio."""
     try:
         portfolio = create_portfolio(user.id, payload.name, payload.description, payload.portfolio_type, db)
@@ -32,7 +32,7 @@ def create_portfolio_route(payload: PortfolioRequest, user=Depends(get_current_u
 
 
 @router.get("/portfolios")
-def list_portfolios(user=Depends(get_current_user), db: Session = Depends(get_db)):
+def list_portfolios(user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Get all portfolios for the user."""
     portfolios = get_user_portfolios(user.id, db)
     return {
@@ -43,7 +43,7 @@ def list_portfolios(user=Depends(get_current_user), db: Session = Depends(get_db
 
 
 @router.get("/portfolios/{portfolio_id}")
-def get_portfolio_route(portfolio_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def get_portfolio_route(portfolio_id: int, user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Get a specific portfolio."""
     portfolio = get_portfolio(portfolio_id, user.id, db)
     if not portfolio:
@@ -52,7 +52,7 @@ def get_portfolio_route(portfolio_id: int, user=Depends(get_current_user), db: S
 
 
 @router.post("/portfolios/{portfolio_id}/holdings", status_code=status.HTTP_201_CREATED)
-def add_holding_route(portfolio_id: int, payload: HoldingRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def add_holding_route(portfolio_id: int, payload: HoldingRequest, user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Add a holding to a portfolio."""
     try:
         holding = add_holding(
@@ -71,7 +71,7 @@ def add_holding_route(portfolio_id: int, payload: HoldingRequest, user=Depends(g
 
 
 @router.get("/portfolios/{portfolio_id}/holdings")
-def get_holdings_route(portfolio_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def get_holdings_route(portfolio_id: int, user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Get all holdings in a portfolio."""
     try:
         holdings = get_holdings(portfolio_id, user.id, db)
@@ -85,7 +85,7 @@ def get_holdings_route(portfolio_id: int, user=Depends(get_current_user), db: Se
 
 
 @router.put("/holdings/{holding_id}/price")
-def update_price_route(holding_id: int, payload: PriceUpdateRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
+def update_price_route(holding_id: int, payload: PriceUpdateRequest, user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Update the price of a holding."""
     try:
         holding = update_holding_price(holding_id, user.id, payload.new_price, db)
@@ -95,6 +95,6 @@ def update_price_route(holding_id: int, payload: PriceUpdateRequest, user=Depend
 
 
 @router.get("/summary")
-def portfolio_summary_route(user=Depends(get_current_user), db: Session = Depends(get_db)):
+def portfolio_summary_route(user=Depends(get_default_user), db: Session = Depends(get_db)):
     """Get portfolio summary statistics."""
     return get_portfolio_summary(user.id, db)

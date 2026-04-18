@@ -1,0 +1,55 @@
+Financial Monitoring System API Documentation
+
+Base URL:
+- http://localhost:8000/
+- Swagger UI: http://localhost:8000/docs
+- Redoc: http://localhost:8000/redoc
+
+Auth Endpoints (/api/auth):
+- POST /api/auth/register
+  body: {username, email, password, first_name, last_name, phone}
+- POST /api/auth/login
+  body: {email, password}
+  response: {access_token, refresh_token, user}
+- GET /api/auth/profile
+  header: Authorization: Bearer <token>
+- PUT /api/auth/profile
+  header: Authorization: Bearer <token>
+  body: fields to update
+- POST /api/auth/forgot-password
+  body: {email}
+- POST /api/auth/verify-otp
+  body: {email, otp_code}
+- POST /api/auth/reset-password
+  body: {reset_token, new_password}
+- POST /api/auth/change-password
+  header: Authorization: Bearer <token>
+  body: {current_password, new_password}
+
+Portfolio Endpoints (/api/portfolio):
+- POST /api/portfolio/portfolios
+  body: {name, description, portfolio_type}
+- GET /api/portfolio/portfolios
+- GET /api/portfolio/portfolios/{portfolio_id}
+- POST /api/portfolio/portfolios/{portfolio_id}/holdings
+  body: {stock_symbol, stock_name, quantity, buy_price, sector}
+- GET /api/portfolio/portfolios/{portfolio_id}/holdings
+- PUT /api/portfolio/holdings/{holding_id}/price
+  body: {new_price}
+- GET /api/portfolio/summary
+
+Market Analysis Endpoints (/api/market-analysis):
+- POST /api/market-analysis/analyze
+  body: {stock_symbol, stock_name, current_price, sector}
+- GET /api/market-analysis/analyses?limit=10
+- GET /api/market-analysis/news
+
+Run backend:
+- cd c:\Projects-1\financial-monitoring-system
+- venv\Scripts\Activate.ps1
+- uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Run frontend:
+- cd c:\Projects-1\financial-monitoring-system\frontend
+- npm install
+- npm run dev

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-"""Drop old tables and create new ORM schema."""
-from sqlalchemy import create_engine, text
-from app.database import Base
+"""Drop and recreate ORM schema for the configured database URL."""
+from app.database import Base, engine
 
 # Import all models to register them with Base
 from app.models.user import User
@@ -10,22 +9,11 @@ from app.models.holding import Holding
 from app.models.stock import Stock
 from app.models.market_analysis import MarketAnalysis
 
-# Connect to database
-DATABASE_URL = 'postgresql://postgres:Guddiguddi13@localhost:5432/financial_db'
-engine = create_engine(DATABASE_URL)
-
-print("Dropping existing tables...")
-# Drop existing tables that don't match our ORM
-with engine.begin() as connection:
-    connection.execute(text('DROP TABLE IF EXISTS market_prices CASCADE'))
-    connection.execute(text('DROP TABLE IF EXISTS alerts CASCADE'))
-    connection.execute(text('DROP TABLE IF EXISTS portfolio CASCADE'))
-    connection.execute(text('DROP TABLE IF EXISTS users CASCADE'))
-    connection.commit()
-    print("Old tables dropped.")
+print("Dropping existing ORM tables...")
+Base.metadata.drop_all(bind=engine)
+print("Existing ORM tables dropped.")
 
 print("\nCreating new ORM tables...")
-# Create new tables based on ORM models
 Base.metadata.create_all(bind=engine)
 print("New tables created!")
 

@@ -1,11 +1,6 @@
 """Integration test for password reset endpoints"""
 
-from fastapi.testclient import TestClient
-from app.main import app
-
-client = TestClient(app)
-
-def test_password_reset_flow():
+def test_password_reset_flow(client):
     """Test complete password reset flow"""
     
     # First, register a user
@@ -40,7 +35,9 @@ def test_password_reset_flow():
     print("\n=== Step 3: Extract OTP from utility ===")
     from app.utils import otp_util
     otp_store = otp_util.OTP_STORE
-    otp_code = otp_store[1]["code"]  # user_id=1
+    assert otp_store, "OTP store is empty after forgot-password request"
+    latest_user_id = next(reversed(otp_store))
+    otp_code = otp_store[latest_user_id]["code"]
     print(f"OTP Code: {otp_code}")
     
     # Step 4: Verify OTP

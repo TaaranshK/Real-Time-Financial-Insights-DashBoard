@@ -1,11 +1,4 @@
 """
-risk_utils.py - Calculates Market Risk Level
-=============================================
-
-What this file does:
-- Looks at price changes
-- Decides if it's Low, Medium, or High risk
-
 How it works:
 - Big price change = High Risk
 - Medium price change = Medium Risk
@@ -13,14 +6,9 @@ How it works:
 """
 
 
-# ============ CALCULATE RISK ============
+
 def calculate_risk(prices):
-    """
-    Calculates risk level based on price movement.
-    
-    Input: list of price objects from database
-    Output: "Low Risk", "Medium Risk", or "High Risk"
-    """
+  
     
     # Step 1: Need at least 2 prices to compare
     if len(prices) < 2:

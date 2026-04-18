@@ -1,30 +1,30 @@
 """
 Database configuration and session management.
-Uses SQLite for development, PostgreSQL for production.
+
+Uses SQLite by default for local development, and respects DATABASE_URL when set.
 """
 
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Store AND Configure URL  
-# PostgreSQL connection
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:Guddiguddi13@localhost:5432/financial_db"
-)
+load_dotenv()
 
-#Create Database Engine
-engine = create_engine(DATABASE_URL)
+# Use SQLite by default so backend works without requiring local PostgreSQL.
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or "sqlite:///./financial_monitoring.db"
 
-# Create Database Session 
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Handle The Database Injection
+
 def get_db():
-    
+    """FastAPI dependency that yields a DB session and closes it after use."""
     db = SessionLocal()
     try:
         yield db

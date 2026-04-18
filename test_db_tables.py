@@ -1,32 +1,26 @@
 #!/usr/bin/env python
-"""Test database schema."""
-from sqlalchemy import create_engine, text, inspect
-from sqlalchemy.orm import sessionmaker
+"""Manual script to inspect table existence for the configured database."""
 
-# Connect to database
-engine = create_engine('postgresql://postgres:Guddiguddi13@localhost:5432/financial_db')
-inspector = inspect(engine)
+import os
+from sqlalchemy import create_engine, inspect
 
-# Get all tables
-tables = inspector.get_table_names()
-print("Tables in database:", tables)
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or "sqlite:///./financial_monitoring.db"
 
-# Check if key tables exist
-needed_tables = ['user', 'portfolio', 'holding', 'stock', 'market_analysis']
-for table in needed_tables:
-    exists = table in tables
-    print(f"  {table}: {'✓' if exists else '✗'}")
 
-# If tables don't exist, create them
-if not tables:
-    print("\nNo tables found. Need to run migrations.")
-    from app.models.base import Base
-    Base.metadata.create_all(bind=engine)
-    print("Tables created!")
+def run() -> None:
+    """Run a simple table existence check."""
+    engine = create_engine(DATABASE_URL)
     inspector = inspect(engine)
     tables = inspector.get_table_names()
-    print("Tables now:", tables)
-else:
-    print("\nTables already exist!")
 
-engine.dispose()
+    print("Tables in database:", tables)
+
+    expected_tables = ["users", "portfolios", "holdings", "stocks", "market_analyses"]
+    for table in expected_tables:
+        print(f"  {table}: {'yes' if table in tables else 'no'}")
+
+    engine.dispose()
+
+
+if __name__ == "__main__":
+    run()
